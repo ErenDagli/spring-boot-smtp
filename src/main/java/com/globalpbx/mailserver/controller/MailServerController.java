@@ -1,5 +1,6 @@
 package com.globalpbx.mailserver.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.globalpbx.mailserver.dto.MailInfoDto;
 import com.globalpbx.mailserver.service.MailServerService;
 import jakarta.mail.MessagingException;
@@ -24,7 +25,7 @@ public class MailServerController {
     }
 
     @PostMapping
-    public ResponseEntity<String> sendMail(@RequestBody List<MailInfoDto> mailInfoDtoList){
+    public ResponseEntity<String> sendMail(@RequestBody List<MailInfoDto> mailInfoDtoList) throws JsonProcessingException {
         return ResponseEntity.ok(mailServerService.sendMail(mailInfoDtoList));
     }
 

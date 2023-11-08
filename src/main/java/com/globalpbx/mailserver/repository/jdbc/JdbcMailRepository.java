@@ -1,5 +1,7 @@
 package com.globalpbx.mailserver.repository.jdbc;
 
+import com.globalpbx.mailserver.constant.MailsColumnName;
+import com.globalpbx.mailserver.constant.TableNameConstants;
 import com.globalpbx.mailserver.dto.MailInfoDto;
 import com.globalpbx.mailserver.repository.MailServerRepository;
 import org.springframework.stereotype.Component;
@@ -15,14 +17,14 @@ public class JdbcMailRepository implements MailServerRepository {
         List<MailInfoDto> mailList = new ArrayList<>();
 
         try (Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery("SELECT * FROM mails")) {
+             ResultSet resultSet = statement.executeQuery("SELECT * FROM " + TableNameConstants.MAILS)) {
             while (resultSet.next()) {
-                long id = resultSet.getLong("id");
-                String path = resultSet.getString("path");
-                float versionNumber = resultSet.getFloat("version_number");
-                String recipient = resultSet.getString("recipient");
-                String subject = resultSet.getString("subject");
-                String body = resultSet.getString("body");
+                long id = resultSet.getLong(MailsColumnName.ID);
+                String path = resultSet.getString(MailsColumnName.PATH);
+                float versionNumber = resultSet.getFloat(MailsColumnName.VERSION_NUMBER);
+                String recipient = resultSet.getString(MailsColumnName.RECIPIENT);
+                String subject = resultSet.getString(MailsColumnName.SUBJECT);
+                String body = resultSet.getString(MailsColumnName.BODY);
 
                 MailInfoDto mail = new MailInfoDto(id, path, versionNumber, recipient, subject, body);
                 mailList.add(mail);
@@ -37,7 +39,7 @@ public class JdbcMailRepository implements MailServerRepository {
     @Override
     public MailInfoDto saveMail(Connection connection, MailInfoDto mailInfoDto) throws SQLException {
 
-        String insertQuery = "INSERT INTO mails (path, version_number, recipient, subject, body)\n" +
+        String insertQuery = "INSERT INTO "+ TableNameConstants.MAILS+ " (path, version_number, recipient, subject, body)\n" +
                 "                VALUES (?,?,?,?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(insertQuery);
 
