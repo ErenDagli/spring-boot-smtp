@@ -10,6 +10,7 @@ import java.util.List;
 @Repository
 public interface MailServerVersionRepository {
 
+    void createVersionTable(Connection connection);
     List<String> getAllVersion(Connection connection);
     String saveVersion(Connection connection, MailInfoDto mailInfoDto) throws SQLException;
     String findLastVersion(Connection connection) throws SQLException;

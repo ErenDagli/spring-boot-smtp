@@ -149,6 +149,7 @@ public class MailServerServiceImpl implements MailServerService {
         }
         return "Email sent successfully!";
     }
+
     @Scheduled(fixedRate = 10000) // Runs every 10 seconds
     public void mailSendAndTransferDatabase() throws JsonProcessingException {
         while (true) {
@@ -168,30 +169,18 @@ public class MailServerServiceImpl implements MailServerService {
         }
     }
 
-    private void createTable(Connection connection, String tableName) throws SQLException {
-        String createTableSQL;
+    private void createTable(Connection connection, String tableName) {
         switch (tableName) {
             case mailsTable:
-                createTableSQL = "CREATE TABLE " + tableName + "(\n" +
-                        "    id BIGINT PRIMARY KEY,\n" +
-                        "    path VARCHAR(255),\n" +
-                        "    version_number FLOAT,\n" +
-                        "    recipient  VARCHAR(255),\n" +
-                        "    subject VARCHAR(255),\n" +
-                        "    body TEXT\n" +
-                        ");";
+                mailServerRepository.createMailsTable(connection);
                 break;
             case versionTable:
-                createTableSQL = "CREATE TABLE " + tableName + " (id INTEGER PRIMARY KEY, version_number FLOAT)";
+                mailServerVersionRepository.createVersionTable(connection);
                 break;
             default:
                 // Handle the case where the table name is not recognized
                 System.out.println("Handle the case where the table name is not recognized");
                 throw new IllegalArgumentException("Unsupported table name: " + tableName);
-        }
-
-        try (Statement statement = connection.createStatement()) {
-            statement.executeUpdate(createTableSQL);
         }
     }
 

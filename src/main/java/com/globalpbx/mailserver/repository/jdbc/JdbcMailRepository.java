@@ -12,6 +12,25 @@ import java.util.List;
 
 @Component
 public class JdbcMailRepository implements MailServerRepository {
+
+    @Override
+    public void createMailsTable(Connection connection) {
+        String createTableSQL = "CREATE TABLE " + TableNameConstants.MAILS + "(\n" +
+                "    id INTEGER PRIMARY KEY,\n" +
+                "    path VARCHAR(255),\n" +
+                "    version_number FLOAT,\n" +
+                "    recipient  VARCHAR(255),\n" +
+                "    subject VARCHAR(255),\n" +
+                "    body TEXT\n" +
+                ");";
+
+        try (Statement statement = connection.createStatement()) {
+            statement.executeUpdate(createTableSQL);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @Override
     public List<MailInfoDto> getAllMails(Connection connection) {
         List<MailInfoDto> mailList = new ArrayList<>();

@@ -13,12 +13,24 @@ import java.util.List;
 @Component
 public class JdbcMailServerVersionRepository implements MailServerVersionRepository {
     @Override
+    public void createVersionTable(Connection connection) {
+
+        String createTableSQL = "CREATE TABLE " + TableNameConstants.VERSIONS + " (id INTEGER PRIMARY KEY, version_number FLOAT)";
+
+        try (Statement statement = connection.createStatement()) {
+            statement.executeUpdate(createTableSQL);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
     public List<String> getAllVersion(Connection connection) {
 
         List<String> versionList = new ArrayList<>();
 
         try (Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery("SELECT * FROM "+ TableNameConstants.VERSIONS)) {
+             ResultSet resultSet = statement.executeQuery("SELECT * FROM " + TableNameConstants.VERSIONS)) {
             while (resultSet.next()) {
                 float versionNumber = resultSet.getFloat(VersionsColumnName.VERSION_NUMBER);
                 versionList.add(String.valueOf(versionNumber));
@@ -31,7 +43,7 @@ public class JdbcMailServerVersionRepository implements MailServerVersionReposit
 
     @Override
     public String saveVersion(Connection connection, MailInfoDto mailInfoDto) throws SQLException {
-        String selectQueryFromVersionTable = "SELECT * FROM " + TableNameConstants.VERSIONS +" WHERE version_number = ?";
+        String selectQueryFromVersionTable = "SELECT * FROM " + TableNameConstants.VERSIONS + " WHERE version_number = ?";
         PreparedStatement preparedStatementSelect = connection.prepareStatement(selectQueryFromVersionTable);
         preparedStatementSelect.setString(1, String.valueOf(mailInfoDto.getVersionNumber()));
 
@@ -40,7 +52,7 @@ public class JdbcMailServerVersionRepository implements MailServerVersionReposit
         if (resultSet.next()) {
             return "Version number already exists: " + mailInfoDto.getVersionNumber();
         } else {
-            String insertQueryToVersionTable = "INSERT INTO " + TableNameConstants.VERSIONS +" (version_number) VALUES (?)";
+            String insertQueryToVersionTable = "INSERT INTO " + TableNameConstants.VERSIONS + " (version_number) VALUES (?)";
             PreparedStatement preparedStatementVersionTable = connection.prepareStatement(insertQueryToVersionTable);
 
             preparedStatementVersionTable.setString(1, String.valueOf(mailInfoDto.getVersionNumber()));
@@ -52,7 +64,7 @@ public class JdbcMailServerVersionRepository implements MailServerVersionReposit
 
     @Override
     public String findLastVersion(Connection connection) throws SQLException {
-        String selectLastRowQuery = "SELECT * FROM " + TableNameConstants.VERSIONS +" ORDER BY rowid DESC LIMIT 1";
+        String selectLastRowQuery = "SELECT * FROM " + TableNameConstants.VERSIONS + " ORDER BY rowid DESC LIMIT 1";
         try (PreparedStatement preparedStatement = connection.prepareStatement(selectLastRowQuery);
              ResultSet resultSet = preparedStatement.executeQuery()) {
             if (resultSet.next()) {

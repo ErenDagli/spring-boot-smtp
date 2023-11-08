@@ -9,6 +9,8 @@ import java.util.List;
 
 @Repository
 public interface MailServerRepository {
+
+    void createMailsTable(Connection connection);
     List<MailInfoDto> getAllMails(Connection connection);
     MailInfoDto saveMail(Connection connection,MailInfoDto mailInfoDto) throws SQLException;
 }
