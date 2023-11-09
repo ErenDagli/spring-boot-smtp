@@ -13,12 +13,14 @@ import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.sql.*;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.*;
 
 @Service
 public class MailServerServiceImpl implements MailServerService {
@@ -32,6 +34,9 @@ public class MailServerServiceImpl implements MailServerService {
     @Value("${spring.mail.password}")
     private String password;
 
+    private final int numThreads = 5;
+
+    ThreadPoolExecutor executor = new ThreadPoolExecutor(numThreads, numThreads, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
     private final String mailsTable = TableNameConstants.MAILS;
 
     private final String versionTable = TableNameConstants.VERSIONS;
@@ -40,7 +45,6 @@ public class MailServerServiceImpl implements MailServerService {
     private MailServerVersionRepository mailServerVersionRepository;
 
     private final RedisTemplate<String, String> redisTemplate;
-
 
     public void addToQueue(String data) {
         redisTemplate.opsForList().rightPush(mailsTable, data);
@@ -58,23 +62,11 @@ public class MailServerServiceImpl implements MailServerService {
     }
 
 
-    public void sendMailWithRedis(MailInfoDto mailInfoDto) {
+    public synchronized void sendMailWithRedis(MailInfoDto mailInfoDto, Connection connection, DatabaseMetaData metaData) {
         System.out.println("entry is ->" + mailInfoDto);
-        Connection connection = null;
 
         try {
-            // SQLite JDBC driver has been created
-            Class.forName(databaseUrl);
 
-            // SQLite db connection has been created
-            connection = DriverManager.getConnection(mailInfoDto.getPath());
-
-            System.out.println("You have successfully connected to the SQLite database.");
-
-            DatabaseMetaData metaData = connection.getMetaData();
-
-            createTableIfNotExists(connection, metaData, versionTable);
-            createTableIfNotExists(connection, metaData, mailsTable);
 
             String versionNumber = mailServerVersionRepository.findLastVersion(connection);
             if (Float.parseFloat(versionNumber) > -1) {
@@ -123,13 +115,13 @@ public class MailServerServiceImpl implements MailServerService {
                 System.out.println(e.getMessage());
             }
 
-            List<MailInfoDto> allMails = mailServerRepository.getAllMails(connection);
-            allMails.forEach(System.out::println);
+//            List<MailInfoDto> allMails = mailServerRepository.getAllMails(connection);
+//            allMails.forEach(System.out::println);
+//
+//            List<String> allVersions = mailServerVersionRepository.getAllVersion(connection);
+//            allVersions.forEach(System.out::println);
 
-            List<String> allVersions = mailServerVersionRepository.getAllVersion(connection);
-            allVersions.forEach(System.out::println);
-
-        } catch (ClassNotFoundException | SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         } finally {
             if (connection != null) {
@@ -143,31 +135,57 @@ public class MailServerServiceImpl implements MailServerService {
     }
 
     @Override
-    public String sendMail(List<MailInfoDto> mailInfoDtoList) throws JsonProcessingException {
+    public String sendMail(List<MailInfoDto> mailInfoDtoList) {
         for (MailInfoDto mailInfoDto : mailInfoDtoList) {
-            addToQueue(new ObjectMapper().writeValueAsString(mailInfoDto));
+            executor.execute(() -> {
+                try {
+                    addToQueue(new ObjectMapper().writeValueAsString(mailInfoDto));
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+            });
         }
         return "Email sent successfully!";
     }
 
     @Scheduled(fixedRate = 10000) // Runs every 10 seconds
-    public void mailSendAndTransferDatabase() throws JsonProcessingException {
+    public void mailSendAndTransferDatabase() throws JsonProcessingException, ClassNotFoundException, SQLException {
         while (true) {
             String mail = processQueue();
+            Connection connection = null;
             if (mail == null) {
                 System.out.println("queue is empty");
+                if (connection != null) {
+                    connection.close();
+                }
                 break;
             }
             MailInfoDto storedMailInfo = new ObjectMapper().readValue(mail, MailInfoDto.class);
-            sendMailWithRedis(storedMailInfo);
+
+            // SQLite JDBC driver has been created
+            Class.forName(databaseUrl);
+
+            // SQLite db connection has been created
+            connection = DriverManager.getConnection(storedMailInfo.getPath());
+
+            System.out.println("You have successfully connected to the SQLite database.");
+
+            DatabaseMetaData metaData = connection.getMetaData();
+            Connection finalConnection = connection;
+
+
+            createTable(connection, versionTable);
+            createTable(connection, mailsTable);
+            executor.execute(() ->
+                    sendMailWithRedis(storedMailInfo, finalConnection, metaData));
+
+
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                executor.shutdown();
+            }));
         }
     }
 
-    private boolean tableExists(DatabaseMetaData metaData, String tableName) throws SQLException {
-        try (var resultSet = metaData.getTables(null, null, tableName, null)) {
-            return resultSet.next();
-        }
-    }
 
     private void createTable(Connection connection, String tableName) {
         switch (tableName) {
@@ -181,15 +199,6 @@ public class MailServerServiceImpl implements MailServerService {
                 // Handle the case where the table name is not recognized
                 System.out.println("Handle the case where the table name is not recognized");
                 throw new IllegalArgumentException("Unsupported table name: " + tableName);
-        }
-    }
-
-    private void createTableIfNotExists(Connection connection, DatabaseMetaData metaData, String tableName) throws SQLException {
-        if (!tableExists(metaData, tableName)) {
-            createTable(connection, tableName);
-            System.out.println(tableName + " table has been created.");
-        } else {
-            System.out.println(tableName + " table exists.");
         }
     }
 }

@@ -8,5 +8,6 @@ public class MailsColumnName {
     public static final String RECIPIENT = "recipient";
     public static final String SUBJECT = "subject";
     public static final String BODY = "body";
+    public static final String SEND_TIME = "send_time";
 
 }

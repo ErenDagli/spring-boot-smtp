@@ -15,7 +15,7 @@ public class JdbcMailServerVersionRepository implements MailServerVersionReposit
     @Override
     public void createVersionTable(Connection connection) {
 
-        String createTableSQL = "CREATE TABLE " + TableNameConstants.VERSIONS + " (id INTEGER PRIMARY KEY, version_number FLOAT)";
+        String createTableSQL = "create table if not exists  " + TableNameConstants.VERSIONS + " (id INTEGER PRIMARY KEY, version_number FLOAT)";
 
         try (Statement statement = connection.createStatement()) {
             statement.executeUpdate(createTableSQL);

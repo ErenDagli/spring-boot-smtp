@@ -7,6 +7,7 @@ import com.globalpbx.mailserver.repository.MailServerRepository;
 import org.springframework.stereotype.Component;
 
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,13 +16,14 @@ public class JdbcMailRepository implements MailServerRepository {
 
     @Override
     public void createMailsTable(Connection connection) {
-        String createTableSQL = "CREATE TABLE " + TableNameConstants.MAILS + "(\n" +
+        String createTableSQL = "create table if not exists " + TableNameConstants.MAILS + "(\n" +
                 "    id INTEGER PRIMARY KEY,\n" +
                 "    path VARCHAR(255),\n" +
                 "    version_number FLOAT,\n" +
                 "    recipient  VARCHAR(255),\n" +
                 "    subject VARCHAR(255),\n" +
-                "    body TEXT\n" +
+                "    body TEXT,\n" +
+                "    send_time TIMESTAMP\n" +
                 ");";
 
         try (Statement statement = connection.createStatement()) {
@@ -44,8 +46,9 @@ public class JdbcMailRepository implements MailServerRepository {
                 String recipient = resultSet.getString(MailsColumnName.RECIPIENT);
                 String subject = resultSet.getString(MailsColumnName.SUBJECT);
                 String body = resultSet.getString(MailsColumnName.BODY);
+                LocalDateTime sendTime = LocalDateTime.parse(resultSet.getString(MailsColumnName.SEND_TIME));
 
-                MailInfoDto mail = new MailInfoDto(id, path, versionNumber, recipient, subject, body);
+                MailInfoDto mail = new MailInfoDto(id, path, versionNumber, recipient, subject, body,sendTime);
                 mailList.add(mail);
             }
         } catch (Exception e) {
@@ -58,8 +61,8 @@ public class JdbcMailRepository implements MailServerRepository {
     @Override
     public MailInfoDto saveMail(Connection connection, MailInfoDto mailInfoDto) throws SQLException {
 
-        String insertQuery = "INSERT INTO "+ TableNameConstants.MAILS+ " (path, version_number, recipient, subject, body)\n" +
-                "                VALUES (?,?,?,?,?)";
+        String insertQuery = "INSERT INTO "+ TableNameConstants.MAILS+ " (path, version_number, recipient, subject, body,send_time)\n" +
+                "                VALUES (?,?,?,?,?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(insertQuery);
 
         preparedStatement.setString(1, mailInfoDto.getPath());
@@ -67,6 +70,7 @@ public class JdbcMailRepository implements MailServerRepository {
         preparedStatement.setString(3, mailInfoDto.getRecipient());
         preparedStatement.setString(4, mailInfoDto.getSubject());
         preparedStatement.setString(5, mailInfoDto.getBody());
+        preparedStatement.setString(6, String.valueOf(LocalDateTime.now()));
 
         preparedStatement.executeUpdate();
         return mailInfoDto;

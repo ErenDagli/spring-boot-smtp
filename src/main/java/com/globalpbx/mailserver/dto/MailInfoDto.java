@@ -4,6 +4,7 @@ import lombok.*;
 import org.springframework.data.redis.core.RedisHash;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -17,6 +18,7 @@ public class MailInfoDto{
     private String recipient;
     private String subject;
     private String body;
+    private LocalDateTime sendTime;
 
     @Override
     public String toString() {
@@ -27,6 +29,7 @@ public class MailInfoDto{
                 ", recipient='" + recipient + '\'' +
                 ", subject='" + subject + '\'' +
                 ", body='" + body + '\'' +
+                ", sendTime=" + sendTime +
                 '}';
     }
 }
