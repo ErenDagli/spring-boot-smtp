@@ -4,6 +4,8 @@ import com.globalpbx.mailserver.constant.MailsColumnName;
 import com.globalpbx.mailserver.constant.TableNameConstants;
 import com.globalpbx.mailserver.dto.MailInfoDto;
 import com.globalpbx.mailserver.repository.MailServerRepository;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Component;
 
 import java.sql.*;
@@ -13,6 +15,7 @@ import java.util.List;
 
 @Component
 public class JdbcMailRepository implements MailServerRepository {
+    private static final Logger logger = LogManager.getLogger(JdbcMailRepository.class);
 
     @Override
     public void createMailsTable(Connection connection) {
@@ -29,6 +32,7 @@ public class JdbcMailRepository implements MailServerRepository {
         try (Statement statement = connection.createStatement()) {
             statement.executeUpdate(createTableSQL);
         } catch (SQLException e) {
+            logger.error(e.getMessage());
             throw new RuntimeException(e);
         }
     }
@@ -52,6 +56,7 @@ public class JdbcMailRepository implements MailServerRepository {
                 mailList.add(mail);
             }
         } catch (Exception e) {
+            logger.error(e.getMessage());
             e.printStackTrace(); // Handle any potential exceptions properly
         }
 

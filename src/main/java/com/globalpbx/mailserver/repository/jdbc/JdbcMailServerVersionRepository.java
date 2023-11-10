@@ -4,6 +4,8 @@ import com.globalpbx.mailserver.constant.TableNameConstants;
 import com.globalpbx.mailserver.constant.VersionsColumnName;
 import com.globalpbx.mailserver.dto.MailInfoDto;
 import com.globalpbx.mailserver.repository.MailServerVersionRepository;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Component;
 
 import java.sql.*;
@@ -12,6 +14,7 @@ import java.util.List;
 
 @Component
 public class JdbcMailServerVersionRepository implements MailServerVersionRepository {
+    private static final Logger logger = LogManager.getLogger(JdbcMailServerVersionRepository.class);
     @Override
     public void createVersionTable(Connection connection) {
 
@@ -20,6 +23,7 @@ public class JdbcMailServerVersionRepository implements MailServerVersionReposit
         try (Statement statement = connection.createStatement()) {
             statement.executeUpdate(createTableSQL);
         } catch (SQLException e) {
+            logger.error(e.getMessage());
             throw new RuntimeException(e);
         }
     }
@@ -36,6 +40,7 @@ public class JdbcMailServerVersionRepository implements MailServerVersionReposit
                 versionList.add(String.valueOf(versionNumber));
             }
         } catch (Exception e) {
+            logger.error(e.getMessage());
             e.printStackTrace(); // Handle any potential exceptions properly
         }
         return versionList;
@@ -50,6 +55,7 @@ public class JdbcMailServerVersionRepository implements MailServerVersionReposit
         ResultSet resultSet = preparedStatementSelect.executeQuery();
 
         if (resultSet.next()) {
+            logger.info("Version number already exists: " + mailInfoDto.getVersionNumber());
             return "Version number already exists: " + mailInfoDto.getVersionNumber();
         } else {
             String insertQueryToVersionTable = "INSERT INTO " + TableNameConstants.VERSIONS + " (version_number) VALUES (?)";
@@ -58,6 +64,7 @@ public class JdbcMailServerVersionRepository implements MailServerVersionReposit
             preparedStatementVersionTable.setString(1, String.valueOf(mailInfoDto.getVersionNumber()));
 
             preparedStatementVersionTable.executeUpdate();
+            logger.info("Version added successfully! -> " + mailInfoDto.getVersionNumber());
             return "Version added successfully! -> " + mailInfoDto.getVersionNumber();
         }
     }

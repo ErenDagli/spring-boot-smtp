@@ -2,6 +2,7 @@ package com.globalpbx.mailserver.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.globalpbx.mailserver.MailServerApplication;
 import com.globalpbx.mailserver.constant.TableNameConstants;
 import com.globalpbx.mailserver.dto.MailInfoDto;
 import com.globalpbx.mailserver.repository.MailServerRepository;
@@ -11,6 +12,8 @@ import com.globalpbx.mailserver.util.FixedVirtualThreadExecutorService;
 import jakarta.mail.*;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -37,6 +40,7 @@ public class MailServerServiceImpl implements MailServerService {
     private String password;
     ExecutorService executorService = new FixedVirtualThreadExecutorService(10);
 
+    private static final Logger logger = LogManager.getLogger(MailServerServiceImpl.class);
     private ReentrantLock reentrantLock = new ReentrantLock();
 
     private final int numThreads = 10;
@@ -68,11 +72,9 @@ public class MailServerServiceImpl implements MailServerService {
 
 
     public void sendMailWithRedis(MailInfoDto mailInfoDto, Connection connection) {
-        System.out.println("entry is ->" + mailInfoDto);
+        logger.info("entry is -> " + mailInfoDto);
         reentrantLock.lock();
         try {
-
-
             String versionNumber = mailServerVersionRepository.findLastVersion(connection);
             if (Float.parseFloat(versionNumber) > -1) {
                 if (Float.parseFloat(versionNumber) < mailInfoDto.getVersionNumber()) {
@@ -80,10 +82,10 @@ public class MailServerServiceImpl implements MailServerService {
                     String alterTableQuery = "ALTER TABLE " + mailsTable + " ADD COLUMN new_column_name varchar(255)";
                     try (Statement statement = connection.createStatement()) {
                         statement.executeUpdate(alterTableQuery);
-                        System.out.println("The new column has been added successfully.");
+                        logger.info("The new column has been added successfully.");
                     }
                 }
-                System.out.println("Last Version Number: " + versionNumber);
+                logger.info("Last Version Number: " + versionNumber);
             }
 
 
@@ -112,12 +114,12 @@ public class MailServerServiceImpl implements MailServerService {
                 Transport.send(message);
 
                 MailInfoDto savedMail = mailServerRepository.saveMail(connection, mailInfoDto);
-                System.out.println(savedMail);
-                System.out.println("Email sent successfully.");
+                logger.info("Saved mail -> " + savedMail);
+                logger.info("Email sent successfully.");
 
             } catch (MessagingException | SQLException e) {
+                logger.error(e.getMessage());
                 e.printStackTrace();
-                System.out.println(e.getMessage());
             }
 
 //            List<MailInfoDto> allMails = mailServerRepository.getAllMails(connection);
@@ -127,6 +129,7 @@ public class MailServerServiceImpl implements MailServerService {
 //            allVersions.forEach(System.out::println);
 
         } catch (SQLException e) {
+            logger.error(e.getMessage());
             e.printStackTrace();
         } finally {
             reentrantLock.unlock();
@@ -134,6 +137,7 @@ public class MailServerServiceImpl implements MailServerService {
                 try {
                     connection.close();
                 } catch (SQLException e) {
+                    logger.error(e.getMessage());
                     e.printStackTrace();
                 }
             }
@@ -147,6 +151,7 @@ public class MailServerServiceImpl implements MailServerService {
                 try {
                     addToQueue(new ObjectMapper().writeValueAsString(mailInfoDto));
                 } catch (JsonProcessingException e) {
+                    logger.error(e.getMessage());
                     throw new RuntimeException(e);
                 }
             });
@@ -160,7 +165,7 @@ public class MailServerServiceImpl implements MailServerService {
             String mail = processQueue();
             Connection connection = null;
             if (mail == null) {
-                System.out.println("queue is empty");
+                logger.info("queue is empty");
                 break;
             }
 
@@ -172,7 +177,7 @@ public class MailServerServiceImpl implements MailServerService {
             // SQLite db connection has been created
             connection = DriverManager.getConnection(storedMailInfo.getPath());
 
-            System.out.println("You have successfully connected to the SQLite database.");
+            logger.info("You have successfully connected to the SQLite database.");
 
             Connection finalConnection = connection;
 
@@ -184,6 +189,7 @@ public class MailServerServiceImpl implements MailServerService {
 
 
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                logger.info("Executor shutting down");
                 executor.shutdown();
             }));
         }
@@ -192,16 +198,12 @@ public class MailServerServiceImpl implements MailServerService {
 
     private void createTable(Connection connection, String tableName) {
         switch (tableName) {
-            case mailsTable:
-                mailServerRepository.createMailsTable(connection);
-                break;
-            case versionTable:
-                mailServerVersionRepository.createVersionTable(connection);
-                break;
-            default:
-                // Handle the case where the table name is not recognized
-                System.out.println("Handle the case where the table name is not recognized");
+            case mailsTable -> mailServerRepository.createMailsTable(connection);
+            case versionTable -> mailServerVersionRepository.createVersionTable(connection);
+            default -> {
+                logger.error("Handle the case where the table name is not recognized");
                 throw new IllegalArgumentException("Unsupported table name: " + tableName);
+            }
         }
     }
 }
