@@ -72,7 +72,7 @@ public class MailServerServiceImpl implements MailServerService {
 
 
     public void sendMailWithRedis(MailInfoDto mailInfoDto, Connection connection) {
-        logger.info("entry is -> " + mailInfoDto);
+        logger.info("Entry is -> " + mailInfoDto);
         reentrantLock.lock();
         try {
             String versionNumber = mailServerVersionRepository.findLastVersion(connection);
@@ -90,7 +90,7 @@ public class MailServerServiceImpl implements MailServerService {
 
 
             String savedVersion = mailServerVersionRepository.saveVersion(connection, mailInfoDto);
-            logger.info(savedVersion + mailInfoDto.getVersionNumber());
+            logger.info(savedVersion);
 
             Properties props = new Properties();
             props.put("mail.smtp.auth", "true");
