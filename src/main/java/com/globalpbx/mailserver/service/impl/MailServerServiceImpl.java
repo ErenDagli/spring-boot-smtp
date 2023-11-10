@@ -7,6 +7,7 @@ import com.globalpbx.mailserver.dto.MailInfoDto;
 import com.globalpbx.mailserver.repository.MailServerRepository;
 import com.globalpbx.mailserver.repository.MailServerVersionRepository;
 import com.globalpbx.mailserver.service.MailServerService;
+import com.globalpbx.mailserver.util.FixedVirtualThreadExecutorService;
 import jakarta.mail.*;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
@@ -21,6 +22,7 @@ import java.sql.*;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.*;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 public class MailServerServiceImpl implements MailServerService {
@@ -33,8 +35,11 @@ public class MailServerServiceImpl implements MailServerService {
 
     @Value("${spring.mail.password}")
     private String password;
+    ExecutorService executorService = new FixedVirtualThreadExecutorService(10);
 
-    private final int numThreads = 5;
+    private ReentrantLock reentrantLock = new ReentrantLock();
+
+    private final int numThreads = 10;
 
     ThreadPoolExecutor executor = new ThreadPoolExecutor(numThreads, numThreads, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
     private final String mailsTable = TableNameConstants.MAILS;
@@ -62,9 +67,9 @@ public class MailServerServiceImpl implements MailServerService {
     }
 
 
-    public synchronized void sendMailWithRedis(MailInfoDto mailInfoDto, Connection connection, DatabaseMetaData metaData) {
+    public void sendMailWithRedis(MailInfoDto mailInfoDto, Connection connection) {
         System.out.println("entry is ->" + mailInfoDto);
-
+        reentrantLock.lock();
         try {
 
 
@@ -124,6 +129,7 @@ public class MailServerServiceImpl implements MailServerService {
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {
+            reentrantLock.unlock();
             if (connection != null) {
                 try {
                     connection.close();
@@ -150,16 +156,14 @@ public class MailServerServiceImpl implements MailServerService {
 
     @Scheduled(fixedRate = 10000) // Runs every 10 seconds
     public void mailSendAndTransferDatabase() throws JsonProcessingException, ClassNotFoundException, SQLException {
-        while (true) {
+        while (executor.getPoolSize() - executor.getActiveCount() != 0) {
             String mail = processQueue();
             Connection connection = null;
             if (mail == null) {
                 System.out.println("queue is empty");
-                if (connection != null) {
-                    connection.close();
-                }
                 break;
             }
+
             MailInfoDto storedMailInfo = new ObjectMapper().readValue(mail, MailInfoDto.class);
 
             // SQLite JDBC driver has been created
@@ -170,14 +174,13 @@ public class MailServerServiceImpl implements MailServerService {
 
             System.out.println("You have successfully connected to the SQLite database.");
 
-            DatabaseMetaData metaData = connection.getMetaData();
             Connection finalConnection = connection;
 
 
             createTable(connection, versionTable);
             createTable(connection, mailsTable);
             executor.execute(() ->
-                    sendMailWithRedis(storedMailInfo, finalConnection, metaData));
+                    sendMailWithRedis(storedMailInfo, finalConnection));
 
 
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
