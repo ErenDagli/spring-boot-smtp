@@ -55,7 +55,6 @@ public class JdbcMailServerVersionRepository implements MailServerVersionReposit
         ResultSet resultSet = preparedStatementSelect.executeQuery();
 
         if (resultSet.next()) {
-            logger.info("Version number already exists: " + mailInfoDto.getVersionNumber());
             return "Version number already exists: " + mailInfoDto.getVersionNumber();
         } else {
             String insertQueryToVersionTable = "INSERT INTO " + TableNameConstants.VERSIONS + " (version_number) VALUES (?)";
@@ -64,7 +63,6 @@ public class JdbcMailServerVersionRepository implements MailServerVersionReposit
             preparedStatementVersionTable.setString(1, String.valueOf(mailInfoDto.getVersionNumber()));
 
             preparedStatementVersionTable.executeUpdate();
-            logger.info("Version added successfully! -> " + mailInfoDto.getVersionNumber());
             return "Version added successfully! -> " + mailInfoDto.getVersionNumber();
         }
     }

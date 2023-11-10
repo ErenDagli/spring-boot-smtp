@@ -90,7 +90,7 @@ public class MailServerServiceImpl implements MailServerService {
 
 
             String savedVersion = mailServerVersionRepository.saveVersion(connection, mailInfoDto);
-            System.out.println("New version added to version table. New version : " + savedVersion);
+            logger.info(savedVersion + mailInfoDto.getVersionNumber());
 
             Properties props = new Properties();
             props.put("mail.smtp.auth", "true");
