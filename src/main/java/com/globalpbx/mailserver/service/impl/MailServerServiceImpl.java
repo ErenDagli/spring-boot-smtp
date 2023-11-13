@@ -201,7 +201,7 @@ public class MailServerServiceImpl implements MailServerService {
             case mailsTable -> mailServerRepository.createMailsTable(connection);
             case versionTable -> mailServerVersionRepository.createVersionTable(connection);
             default -> {
-                logger.error("Handle the case where the table name is not recognized");
+                logger.error("Unsupported table name: " + tableName);
                 throw new IllegalArgumentException("Unsupported table name: " + tableName);
             }
         }
