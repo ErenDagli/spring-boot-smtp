@@ -14,7 +14,7 @@
             <PatternLayout pattern="${LOG_PATTERN}" />
             <Policies>
                 <TimeBasedTriggeringPolicy interval="1" modulate="true" />
-                <SizeBasedTriggeringPolicy size="10KB" />
+                <SizeBasedTriggeringPolicy size="100MB" />
             </Policies>
             <!-- Max 10 files will be created everyday -->
             <DefaultRolloverStrategy max="10">
@@ -31,7 +31,7 @@
             <PatternLayout pattern="${LOG_PATTERN}" />
             <Policies>
                 <TimeBasedTriggeringPolicy interval="1" modulate="true" />
-                <SizeBasedTriggeringPolicy size="10KB" />
+                <SizeBasedTriggeringPolicy size="100MB" />
             </Policies>
             <!-- Max 10 files will be created everyday -->
             <DefaultRolloverStrategy max="10">
@@ -48,7 +48,7 @@
             <PatternLayout pattern="${LOG_PATTERN}" />
             <Policies>
                 <TimeBasedTriggeringPolicy interval="1" modulate="true" />
-                <SizeBasedTriggeringPolicy size="10KB" />
+                <SizeBasedTriggeringPolicy size="100MB" />
             </Policies>
             <!-- Max 10 files will be created everyday -->
             <DefaultRolloverStrategy max="10">
@@ -65,7 +65,7 @@
             <PatternLayout pattern="${LOG_PATTERN}" />
             <Policies>
                 <TimeBasedTriggeringPolicy interval="1" modulate="true" />
-                <SizeBasedTriggeringPolicy size="10KB" />
+                <SizeBasedTriggeringPolicy size="100MB" />
             </Policies>
             <!-- Max 10 files will be created everyday -->
             <DefaultRolloverStrategy max="10">
@@ -82,7 +82,7 @@
             <PatternLayout pattern="${LOG_PATTERN}" />
             <Policies>
                 <TimeBasedTriggeringPolicy interval="1" modulate="true" />
-                <SizeBasedTriggeringPolicy size="10KB" />
+                <SizeBasedTriggeringPolicy size="100MB" />
             </Policies>
             <!-- Max 10 files will be created everyday -->
             <DefaultRolloverStrategy max="10">
