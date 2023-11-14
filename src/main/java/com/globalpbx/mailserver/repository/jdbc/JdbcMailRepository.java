@@ -52,7 +52,7 @@ public class JdbcMailRepository implements MailServerRepository {
                 String body = resultSet.getString(MailsColumnName.BODY);
                 LocalDateTime sendTime = LocalDateTime.parse(resultSet.getString(MailsColumnName.SEND_TIME));
 
-                MailInfoDto mail = new MailInfoDto(id, path, versionNumber, recipient, subject, body,sendTime);
+                MailInfoDto mail = new MailInfoDto(id, path, versionNumber, recipient, subject, body,sendTime,false);
                 mailList.add(mail);
             }
         } catch (Exception e) {

@@ -17,15 +17,19 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
 import java.sql.*;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
+
+import static com.globalpbx.mailserver.util.FormatterUtil.generateHTMLTable;
 
 @Service
 public class MailServerServiceImpl implements MailServerService {
@@ -97,6 +101,14 @@ public class MailServerServiceImpl implements MailServerService {
             props.put("mail.smtp.starttls.enable", "true");
             props.put("mail.smtp.host", "smtp.gmail.com");
             props.put("mail.smtp.port", "587");
+            /*
+
+            props.put("mail.smtp.host", "smtp.gmail.com");
+            prop.put("mail.smtp.port", "465");
+            prop.put("mail.smtp.auth", "true");
+            prop.put("mail.smtp.socketFactory.port", "465");
+            prop.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+             */
 
             Session session = Session.getInstance(props, new Authenticator() {
                 protected PasswordAuthentication getPasswordAuthentication() {
@@ -105,12 +117,17 @@ public class MailServerServiceImpl implements MailServerService {
             });
 
             try {
-                Message message = new MimeMessage(session);
-                message.setFrom(new InternetAddress(username));
-                message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(mailInfoDto.getRecipient()));
-                message.setSubject(mailInfoDto.getSubject());
-                message.setText(mailInfoDto.getBody());
+                MimeMessage message = new MimeMessage(session);
 
+                MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(message, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED, StandardCharsets.UTF_8.name());
+
+                mimeMessageHelper.setFrom(new InternetAddress(username));
+                mimeMessageHelper.setTo(mailInfoDto.getRecipient());
+                mimeMessageHelper.setSubject(mailInfoDto.getSubject());
+                if(mailInfoDto.getIsHtml() == null) {
+                    mailInfoDto.setIsHtml(false);
+                }
+                mimeMessageHelper.setText(mailInfoDto.getBody(),mailInfoDto.getIsHtml());
                 Transport.send(message);
 
                 MailInfoDto savedMail = mailServerRepository.saveMail(connection, mailInfoDto);
@@ -143,6 +160,7 @@ public class MailServerServiceImpl implements MailServerService {
             }
         }
     }
+
 
     @Override
     public String sendMail(List<MailInfoDto> mailInfoDtoList) {

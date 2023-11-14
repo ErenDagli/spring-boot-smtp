@@ -19,6 +19,7 @@ public class MailInfoDto{
     private String subject;
     private String body;
     private LocalDateTime sendTime;
+    private Boolean isHtml;
 
     @Override
     public String toString() {
