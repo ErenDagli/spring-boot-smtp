@@ -7,6 +7,12 @@ public class FormatterUtil {
         htmlTable.append("<html>\n" +
                 "<head>\n" +
                 "    <title>Basit HTML Tablo</title>\n" +
+                "    <style>\n" +
+                "        th { background-color: lightblue; }\n" +
+                "   .green { background-color: #8BC34A; } \n" +
+                "   .yellow { background-color: #FFEB3B; } \n" +
+                "   .red { background-color: #FF5252; } \n" +
+                "    </style>\n" +
                 "</head>\n" +
                 "<body>");
         htmlTable.append("\n<table border='1'>\n<tr>");
@@ -18,8 +24,22 @@ public class FormatterUtil {
 
         for (String[] row : data) {
             htmlTable.append("<tr>");
-            for (String cell : row) {
-                htmlTable.append("<td>").append(cell).append("</td>");
+            for (int i = 0; i < row.length; i++) {
+                String cell = row[i];
+                if (headers[i].trim().equals("Free Space(%)")) {
+                    int freeSpacePercentage = Integer.parseInt(cell);
+                    if (freeSpacePercentage >= 0 && freeSpacePercentage <= 50) {
+                        htmlTable.append("<td class='green'>").append(cell).append("</td>");
+                    } else if (freeSpacePercentage > 50 && freeSpacePercentage <= 75) {
+                        htmlTable.append("<td class='yellow'>").append(cell).append("</td>");
+                    } else if (freeSpacePercentage > 75 && freeSpacePercentage <= 100) {
+                        htmlTable.append("<td class='red'>").append(cell).append("</td>");
+                    } else {
+                        htmlTable.append("<td>").append(cell).append("</td>");
+                    }
+                } else {
+                    htmlTable.append("<td>").append(cell).append("</td>");
+                }
             }
             htmlTable.append("</tr>");
         }
