@@ -5,11 +5,17 @@ import com.globalpbx.mailserver.dto.DiskUsageDto;
 import com.globalpbx.mailserver.dto.MailInfoDto;
 import com.globalpbx.mailserver.service.DiskService;
 import com.globalpbx.mailserver.service.MailServerService;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.globalpbx.mailserver.util.FormatterUtil.formatFileSize;
 import static com.globalpbx.mailserver.util.FormatterUtil.generateHTMLTable;
 
 @Service
@@ -31,7 +37,7 @@ public class DiskServiceImpl implements DiskService {
                         String.valueOf(diskUsageDto.getTotalSpace()),
                         String.valueOf(diskUsageDto.getUsedSpace()),
                         String.valueOf(diskUsageDto.getFreeSpace()),
-                        String.valueOf(100*(diskUsageDto.getTotalSpace() - diskUsageDto.getFreeSpace()) / diskUsageDto.getTotalSpace())
+                        String.valueOf(100 * (diskUsageDto.getTotalSpace() - diskUsageDto.getFreeSpace()) / diskUsageDto.getTotalSpace())
                 }
         };
 
@@ -50,4 +56,38 @@ public class DiskServiceImpl implements DiskService {
         diskUsageMailInfoDtoList.add(diskUsageMailInfoDto);
         return mailServerService.sendMail(diskUsageMailInfoDtoList);
     }
+
+    @Override
+    @Cacheable("diskUsage")
+    public List<String[]> getDiskUsageByPath(String path,int maxDepth) {
+        List<String[]> fileSizeList = new ArrayList<>();
+        File file = new File(path);
+
+        if (file.exists()) {
+            try {
+                Files.walk(Path.of(path), maxDepth)
+                        .forEach(subDir -> {
+                            long subDirSize = 0;
+                            try {
+                                subDirSize = Files.walk(subDir)
+                                        .filter(Files::isRegularFile)
+                                        .mapToLong(p -> p.toFile().length())
+                                        .sum();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                                throw new RuntimeException(e);
+                            }
+                            fileSizeList.add(new String[]{String.valueOf(subDir.getFileName()), formatFileSize(subDirSize)});
+                        });
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
+            return fileSizeList;
+        }
+        fileSizeList.add(new String[]{"file could not be found"});
+        return fileSizeList;
+    }
+
+
 }

@@ -50,4 +50,15 @@ public class FormatterUtil {
                 "</html>");
         return htmlTable.toString();
     }
+
+    public static String formatFileSize(long size) {
+        double kiloByteSize = (double) size / 1024;
+        double megaByteSize = kiloByteSize / 1024;
+
+        if (megaByteSize > 1) {
+            return String.format("%.2f MB", megaByteSize);
+        } else {
+            return String.format("%.2f KB", kiloByteSize);
+        }
+    }
 }
