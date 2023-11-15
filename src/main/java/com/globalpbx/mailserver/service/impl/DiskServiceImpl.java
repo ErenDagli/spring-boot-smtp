@@ -66,6 +66,7 @@ public class DiskServiceImpl implements DiskService {
         if (file.exists()) {
             try {
                 Files.walk(Path.of(path), maxDepth)
+                        .parallel()
                         .forEach(subDir -> {
                             long subDirSize = 0;
                             try {
