@@ -10,9 +10,7 @@ import java.util.List;
 
 @Repository
 public interface MailServerRepository {
-    @Transactional
     void createMailsTable(Connection connection);
     List<MailInfoDto> getAllMails(Connection connection);
-    @Transactional
     MailInfoDto saveMail(Connection connection,MailInfoDto mailInfoDto) throws SQLException;
 }

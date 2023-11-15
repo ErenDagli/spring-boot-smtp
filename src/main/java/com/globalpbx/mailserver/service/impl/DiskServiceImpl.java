@@ -72,6 +72,7 @@ public class DiskServiceImpl implements DiskService {
                             try {
                                 subDirSize = Files.walk(subDir)
                                         .filter(Files::isRegularFile)
+                                        .parallel()
                                         .mapToLong(p -> p.toFile().length())
                                         .sum();
                             } catch (IOException e) {
