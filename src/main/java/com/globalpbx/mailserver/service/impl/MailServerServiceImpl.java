@@ -21,6 +21,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.sql.*;
@@ -75,7 +76,7 @@ public class MailServerServiceImpl implements MailServerService {
         this.redisTemplate = redisTemplate;
     }
 
-
+    @Transactional
     public void sendMailWithRedis(MailInfoDto mailInfoDto, Connection connection) {
         logger.info("Entry is -> " + mailInfoDto);
         reentrantLock.lock();
