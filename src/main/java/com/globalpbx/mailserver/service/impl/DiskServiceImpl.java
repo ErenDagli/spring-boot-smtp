@@ -1,7 +1,7 @@
 package com.globalpbx.mailserver.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.globalpbx.mailserver.dto.DiskUsageDto;
+import com.globalpbx.mailserver.dto.SendDiskUsageDto;
 import com.globalpbx.mailserver.dto.MailInfoDto;
 import com.globalpbx.mailserver.service.DiskService;
 import com.globalpbx.mailserver.service.MailServerService;
@@ -29,15 +29,15 @@ public class DiskServiceImpl implements DiskService {
     }
 
     @Override
-    public String diskUsage(DiskUsageDto diskUsageDto) throws JsonProcessingException {
+    public String diskUsage(SendDiskUsageDto sendDiskUsageDto) throws JsonProcessingException {
 
         String[] headers = {" Disk Name ", " Total Space ", " Used Space ", " Free Space ", " Free Space(%) "};
         String[][] data = {
-                {diskUsageDto.getDiskName(),
-                        String.valueOf(diskUsageDto.getTotalSpace()),
-                        String.valueOf(diskUsageDto.getUsedSpace()),
-                        String.valueOf(diskUsageDto.getFreeSpace()),
-                        String.valueOf(100 * (diskUsageDto.getTotalSpace() - diskUsageDto.getFreeSpace()) / diskUsageDto.getTotalSpace())
+                {sendDiskUsageDto.getDiskName(),
+                        String.valueOf(sendDiskUsageDto.getTotalSpace()),
+                        String.valueOf(sendDiskUsageDto.getUsedSpace()),
+                        String.valueOf(sendDiskUsageDto.getFreeSpace()),
+                        String.valueOf(100 * (sendDiskUsageDto.getTotalSpace() - sendDiskUsageDto.getFreeSpace()) / sendDiskUsageDto.getTotalSpace())
                 }
         };
 

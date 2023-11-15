@@ -23,7 +23,6 @@ public class LogController {
 
     @PostMapping
     public ResponseEntity<String> createLog(@RequestBody List<LogDto> logDtoListDto) {
-        String savedLog = logService.createLog(logDtoListDto);
-        return new ResponseEntity<>(savedLog, HttpStatus.CREATED);
+        return new ResponseEntity<>(logService.createLog(logDtoListDto), HttpStatus.CREATED);
     }
 }

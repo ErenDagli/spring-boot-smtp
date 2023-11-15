@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.globalpbx.mailserver.dto.MailInfoDto;
 import com.globalpbx.mailserver.service.MailServerService;
 import jakarta.mail.MessagingException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,14 +20,9 @@ public class MailServerController {
         this.mailServerService = mailServerService;
     }
 
-    @GetMapping
-    public ResponseEntity<String> getMail() {
-        return ResponseEntity.ok("Get Mail");
-    }
-
     @PostMapping
     public ResponseEntity<String> sendMail(@RequestBody List<MailInfoDto> mailInfoDtoList) throws JsonProcessingException {
-        return ResponseEntity.ok(mailServerService.sendMail(mailInfoDtoList));
+        return new ResponseEntity<>(mailServerService.sendMail(mailInfoDtoList), HttpStatus.OK);
     }
 
 }

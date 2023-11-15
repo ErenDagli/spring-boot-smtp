@@ -15,4 +15,15 @@ public class LogDto {
     private String projectName;
     private String log;
     private String type;
+
+    @Override
+    public String toString() {
+        return "LogDto{" +
+                "id=" + id +
+                ", logTime=" + logTime +
+                ", projectName='" + projectName + '\'' +
+                ", log='" + log + '\'' +
+                ", type='" + type + '\'' +
+                '}';
+    }
 }

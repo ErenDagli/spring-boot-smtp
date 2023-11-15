@@ -57,7 +57,7 @@ public class JdbcMailRepository implements MailServerRepository {
             }
         } catch (Exception e) {
             logger.error(e.getMessage());
-            e.printStackTrace(); // Handle any potential exceptions properly
+            e.printStackTrace();
         }
 
         return mailList;

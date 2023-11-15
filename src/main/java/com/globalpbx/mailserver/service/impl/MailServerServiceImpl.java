@@ -42,10 +42,11 @@ public class MailServerServiceImpl implements MailServerService {
 
     @Value("${spring.mail.password}")
     private String password;
-    ExecutorService executorService = new FixedVirtualThreadExecutorService(10);
+
+    //ExecutorService executorService = new FixedVirtualThreadExecutorService(10);
 
     private static final Logger logger = LogManager.getLogger(MailServerServiceImpl.class);
-    private ReentrantLock reentrantLock = new ReentrantLock();
+    private final ReentrantLock reentrantLock = new ReentrantLock();
 
     private final int numThreads = 10;
 
@@ -54,8 +55,8 @@ public class MailServerServiceImpl implements MailServerService {
 
     private final String versionTable = TableNameConstants.VERSIONS;
 
-    private MailServerRepository mailServerRepository;
-    private MailServerVersionRepository mailServerVersionRepository;
+    private final MailServerRepository mailServerRepository;
+    private final MailServerVersionRepository mailServerVersionRepository;
 
     private final RedisTemplate<String, String> redisTemplate;
 
